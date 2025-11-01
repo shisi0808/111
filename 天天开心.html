@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文字图形聚集动画</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #f8f8f8;
+            height: 100vh;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            transition: all 2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            opacity: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "微软雅黑", sans-serif;
+            font-size: 14px;
+            color: #333;
+            text-align: center;
+            padding: 0 10px;
+            cursor: pointer;
+        }
+
+        .shape:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // 存储所有图形元素
+        const allShapes = [];
+        // 颜色列表
+        const colors = [
+            '#ffccd5', '#cce5ff', '#c5e0b4', '#e6e6fa',
+            '#fffacd', '#dda0dd', '#ffdab9', '#98fb98',
+            '#f0e68c', '#fff0f5', '#e0ffff', '#faf0e6'
+        ];
+
+        // 提示文字列表
+        const tips = [
+            '多喝水哦~', '保持微笑呀', '每天都要元气满满',
+            '记得吃水果', '保持好心情', '好好爱自己', '我想你了',
+            '梦想成真', '期待下一次见面', '金榜题名',
+            '顺顺利利', '早点休息', '愿所有烦恼都消失',
+            '别熬夜', '今天过得开心嘛', '天冷了，多穿衣服'
+        ];
+
+        // 获取屏幕中心位置
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        // 聚集区域半径
+        const clusterRadius = 180;
+        // 图形数量
+        const shapeCount = 120;
+
+        // 创建图形函数
+        function createShape() {
+            // 创建图形元素
+            const shape = document.createElement('div');
+            shape.className = 'shape';
+
+            // 随机尺寸（80-150px宽度，60-100px高度，适应文字显示）
+            const width = 80 + Math.random() * 70;
+            const height = 60 + Math.random() * 40;
+            shape.style.width = `${width}px`;
+            shape.style.height = `${height}px`;
+
+            // 随机颜色和文字
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const tip = tips[Math.floor(Math.random() * tips.length)];
+            shape.style.backgroundColor = color;
+            shape.textContent = tip;
+
+            // 根据文字长度调整字体大小
+            if (tip.length > 6) {
+                shape.style.fontSize = '12px';
+            }
+
+            // 获取屏幕尺寸
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
+
+            // 随机选择边缘（排除左上角区域）
+            let startX, startY;
+            const edge = Math.floor(Math.random() * 5); // 5种边缘模式
+
+            switch(edge) {
+                case 0: // 上边缘（避开左上角）
+                    startX = screenWidth * 0.3 + Math.random() * screenWidth * 0.7;
+                    startY = -height; // 屏幕上方外部
+                    break;
+                case 1: // 右边缘
+                    startX = screenWidth; // 屏幕右方外部
+                    startY = Math.random() * screenHeight;
+                    break;
+                case 2: // 下边缘
+                    startX = Math.random() * screenWidth;
+                    startY = screenHeight; // 屏幕下方外部
+                    break;
+                case 3: // 左边缘（避开左上角）
+                    startX = -width; // 屏幕左方外部
+                    startY = screenHeight * 0.3 + Math.random() * screenHeight * 0.7;
+                    break;
+                case 4: // 右上角
+                    startX = screenWidth * 0.7 + Math.random() * screenWidth * 0.3;
+                    startY = -height;
+                    break;
+            }
+
+            // 设置初始位置
+            shape.style.left = `${startX}px`;
+            shape.style.top = `${startY}px`;
+
+            // 添加到页面
+            document.body.appendChild(shape);
+            allShapes.push(shape);
+
+            // 淡入效果
+            setTimeout(() => {
+                shape.style.opacity = '0.9';
+            }, 50);
+
+            // 计算目标位置（中心区域内的随机点）
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * clusterRadius;
+            const targetX = centerX - width/2 + Math.cos(angle) * distance;
+            const targetY = centerY - height/2 + Math.sin(angle) * distance;
+
+            // 延迟移动，创造依次聚集的效果
+            setTimeout(() => {
+                shape.style.left = `${targetX}px`;
+                shape.style.top = `${targetY}px`;
+            }, 200 + Math.random() * 500);
+
+            // 点击移除效果
+            shape.onclick = function() {
+                shape.style.opacity = '0';
+                shape.style.transform = 'scale(0.5)';
+                setTimeout(() => {
+                    document.body.removeChild(shape);
+                }, 300);
+            };
+        }
+
+        // 批量创建图形
+        let createdCount = 0;
+        function createShapes() {
+            if (createdCount < shapeCount) {
+                createShape();
+                createdCount++;
+                // 缓慢依次创建（每个间隔100-300ms）
+                setTimeout(createShapes, 100 + Math.random() * 200);
+            }
+        }
+
+        // 开始动画
+        createShapes();
+    </script>
+</body>
+</html>
